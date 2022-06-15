@@ -1,0 +1,118 @@
+VariableName,1911GuideName,SpecialLicenceVersion,AnonymisedVersion,Coded,Label,EW51,EW61,EW81,EW91,EW01,EW11,SCOT51,SCOT61,SCOT71,SCOT81,SCOT91,SCOT01
+Year,YEAR,x,x,x,Census enumeration year,x,x,x,x,x,x,x,x,x,x,x,x
+RecID,RECID,x,x,x,Unique Person identifier,x,x,x,x,x,x,x,x,x,x,x,x
+ParID,PARID,,x,x,Unique Parish Identifier,x,x,x,x,x,x,x,x,x,x,x,x
+ConParID,CONPARID,,x,x,Consistent geography identifer,x,x,x,x,x,x,x,x,x,x,x,x
+Country,COUNTRY,,x,x,Country of enumeration,x,x,x,x,x,x,x,x,x,x,x,x
+Division ,DIVISION,,x,x,Division of enumeration,x,x,x,x,x,x,x,x,x,x,x,x
+RegCnty,REGCNTY,,x,,Registration county of enumeration,x,x,x,x,x,x,x,x,x,x,x,x
+RegDist,REGDIST,,x,,Registration district of enumeration,x,x,x,x,x,x,,,,,,
+SubDist,SUBDIST,,x,,Registration sub-district of enumeration,x,x,x,x,x,x,,,,,,
+RC,RC,,x,x,Registration county number,x,x,x,x,x,x,x,x,x,x,x,x
+RD,RD,,x,x,Registration district number,x,x,x,x,x,x,,,,,,
+RSD,RSD,,x,x,Registration sub-district number,x,x,x,x,x,x,,,,,,
+Parish,PARISH,,x,x,Parish of enumeration,x,x,x,x,x,x,x,x,x,x,x,x
+Area,AREA,,x,x,Area of parish (if available),x,x,,x,,x,,,,,,
+Part,PART,,x,x,If enumeration parish is part of a civil parish ,x,x,,x,x,x,x,x,x,x,x,x
+Population,POP,,x,x,Population of parish,x,x,x,x,x,x,x,x,x,x,x,x
+MalePop,MALEPOP,,x,x,Male population of parish,x,x,x,x,x,x,x,x,x,x,x,x
+FemalePop,FEMALEPOP,,x,x,Female population of parish,x,x,x,x,x,x,x,x,x,x,x,x
+NoOfInstit,NOOFINSTIT,,x,x,Number of institutions within parish,,x,,x,,x,,,,,,
+InstitPop,INSTITPOP,,x,x,Institutional population,,,,,,x,,,,,,
+ParType,PARTYPE,,x,x,Typology of parish (density),x,x,x,x,,x,,,,,,
+Censusref,CENSUSREF,,x,x,Archival census reference,x,x,x,x,x,x,x,x,x,x,x,x
+ImageRef,IMAGEREF,,x,,Census image reference,x,x,x,x,x,x,x,x,x,x,x,x
+PageType,PAGETYPE,,x,x,Type of enumeration page,x,x,x,x,x,x,x,x,x,x,x,x
+DocType,DOCTYPE,,x,x,Type of dwelling,x,x,x,x,x,x,x,x,x,x,x,x
+EnuDist,ENUDIST,,x,x,Enumeration district number,x,x,x,x,x,x,x,x,x,x,x,
+BuildType,BUILDTYPE,,x,,Building type,,,,,,x,,,,,,
+BTCode,BUILDTYPECODE,,x,x,Building type code,,,,,,x,,,,,,
+NoOfRooms,NOOFROOMS,,x,,Number of rooms,,,,x,x,x,,,,,x,x
+Noofroomscode,NOOFROOMCODE,,x,x,Number of rooms code,,,,x,x,x,,,,,x,x
+Schedule,SCHEDULE,,x,x,Schedule,x,x,x,x,x,x,x,x,x,x,x,x
+H,H,,x,x,House indentifier,x,x,x,x,x,x,x,x,x,x,x,x
+Absent,ABSENT,,x,,Absent,,,,,,x,,,,,,
+Absentcode,ABSENTCODE,,x,x,Absent code,,,,,,x,,,,,,
+HSS,HSS,,x,x,Size of household,x,x,x,x,x,x,x,x,x,x,x,x
+Size,SIZE,,,x,Size of houseful,x,x,x,x,x,x,x,x,x,x,x,x
+Address,ADDRESS,x,,,Address,x,x,x,x,x,x,x,x,x,x,x,x
+InstName,INSTNAME,,x,,Insitution name,x,x,,x,x,x,x,x,,,,x
+InstDesc,INSTDESC,,x,,Insitution description,x,x,,x,x,x,,,,,,
+VessName,VESSNAME,,x,,Vessel name,x,x,,x,x,x,,x,,,,
+VessPos,VESPOS,,x,,Position of vessel,x,x,,x,x,x,,,,,,
+Military,MILITARY,,x,,Rank of military personnel,,,,,,x,,,,,,
+PID,PID,,x,x,,x,x,x,x,x,x,x,x,x,x,x,x
+Title,TITLE,x,,,Title,x,x,,x,x,x,x,x,x,x,x,x
+Pname,PNAME,x,,,Forename,x,x,x,x,x,x,x,x,x,x,x,x
+Oname,ONAME,x,,,Other name(s),x,x,,x,x,x,x,x,x,x,x,x
+Sname,SNAME,x,,,Surname,x,x,x,x,x,x,x,x,x,x,x,x
+Sex,SEX,,x,x,Gender,x,x,x,x,x,x,x,x,x,x,x,x
+SexInf,SEXINF,,x,x,Gender inference code,x,x,x,x,x,x,x,x,x,x,x,x
+Age,AGE,,x,x,Age,x,x,x,x,x,x,x,x,x,x,x,x
+Cage,CAGE,,x,x,Character version of age,x,x,x,x,x,x,x,x,x,x,x,x
+AgeInf ,AGEINF,,x,,Age inference code,x,x,x,x,x,x,x,x,x,x,x,x
+Cond,COND,,x,,Marital status,x,x,x,x,x,x,x,x,x,x,x,x
+Mar,MAR,,x,x,Marital status code,x,x,x,x,x,x,x,x,x,x,x,x
+MarInf,MARINF,,x,x,Marital status inference code,x,x,x,x,x,x,x,x,x,x,x,x
+Relat,RELAT,,x,,Relationship to household head,x,x,x,x,x,x,x,x,x,x,x,x
+Rela,RELA,,x,x,Relationship to household head code,x,x,x,x,x,x,x,x,x,x,x,x
+RelInf,RELINF,,x,x,Relationship to household head inference code,x,x,x,x,x,x,x,x,x,x,x,x
+HeadInf  ,HEADINF,,x,x,Household inference code,x,x,x,x,x,x,x,x,x,x,x,x
+Occ,OCC,,x,,Occupation,x,x,x,x,x,x,x,x,x,x,x,x
+HollerOcc,HOLLEROCC,,x,,Hollerith occupation code,,,,,,x,,,,,,
+Occode,OCCODE,,x,x,Occupation code,x,x,x,x,x,x,x,x,x,x,x,x
+HISCO,HISCO,,x,x,HISCO occupation code,x,x,x,x,x,x,x,x,x,x,x,x
+Industry,INDUSTRY,,x,,Industry,,,,,,x,,,,,,
+HollerInd,HOLLERIND,,x,,Hollerith industry code,,,,,,x,,,,,,
+Employ,EMPLOY,,x,,Employment status,,,,x,x,x,,,,,x,x
+EmployCode,EMPLOYCODE,,x,x,Employment status code,,,,x,x,x,,,,,x,x
+AtHome,ATHOME,,x,x,If working at home,,,,x,x,x,,,,,x,x
+Inactive,INACTIVE,,x,x,Inactive code,x,x,x,x,x,x,x,x,x,x,x,x
+Disab,DISAB,,x,,Disability,x,x,x,x,x,x,x,x,x,x,x,x
+DisCode1,DISCODE1,,x,x,Disability code1,x,x,x,x,x,x,x,x,x,x,x,x
+DisCode2,DISCODE2,,x,x,Disability code2,x,x,x,x,x,x,x,x,x,x,x,x
+Bpstring,BPSTRING,,x,,Combined place of birth string,x,x,x,x,x,x,x,x,x,x,x,x
+BpCmty,BPCMTY,,x,,Community (parish) of birth,x,x,x,x,x,x,x,x,x,x,x,x
+Std_Par,STD_PAR,,x,x,Standardised parish of birth,x,x,x,x,x,x,x,x,x,x,x,x
+BpCnty,BPCNTY,,x,,County of birth,x,x,x,x,x,x,x,x,x,x,x,x
+Cnti,CNTI,,x,x,County of birth code,x,x,x,x,x,x,x,x,x,x,x,x
+Alt_Cnti,ALT_CNTI,,x,x,Alternative county of birth code,x,x,x,x,x,x,x,x,x,x,x,x
+BpCtry,BPCTRY,,x,,Country of birth,x,x,x,x,x,x,x,x,x,x,x,x
+Ctry,CTRY,,x,x,Country of birth code,x,x,x,x,x,x,x,x,x,x,x,x
+Alt_Ctry,ALT_CTRY,,x,x,Alternative country of birth code,x,x,x,x,x,x,x,x,x,x,x,x
+HollerB,HOLLERB,,x,,Hollerith birthplace code,,,,,,x,,,,,,
+Nationality,NATIONALITY,,x,,Nationality,,,,,,x,,,,,,
+Lang,LANG,,x,,Language(s)  spoken,,,,x,x,x,,,,,x,x
+Langcode,LANGCODE,,x,x,Code of language(s) spoken,,,,x,x,x,,,,,x,x
+YearsMar,YEARSMAR,,x,x,Number of year married,,,,,,x,,,,,,
+MarYear,MARYEAR,,x,x,Year of marriage (approx.),,,,,,x,,,,,,
+ChildTot,CHILDTOT,,x,x,Total number of children born,,,,,,x,,,,,,
+ChildAlive,CHILDALIVE,,x,x,Total number of children living,,,,,,x,,,,,,
+ChildDead,CHILDDEAD,,x,x,Total number of children who have died,,,,,,x,,,,,,
+ChildrenCode,CHILDRENCODE,,x,x,Check on fertility variables,,,,,,x,,,,,,
+HHD,HHD,,x,x,Household structure classification,x,x,x,x,x,x,x,x,x,x,x,x
+H_Sname,H_SNAME,,,,Surname of household head,x,x,x,x,x,x,x,x,x,x,x,x
+H_Sex,H_SEX,,x,x,Gender of household head,x,x,x,x,x,x,x,x,x,x,x,x
+H_Age ,H_AGE,,x,x,Age of household head,x,x,x,x,x,x,x,x,x,x,x,x
+H_Mar,H_MAR,,x,x,Marital status (code) of household head,x,x,x,x,x,x,x,x,x,x,x,x
+H_Occ,H_OCC,,x,x,Occupation (code)  of household head,x,x,x,x,x,x,x,x,x,x,x,x
+H_CFU,H_CFU,,x,x,Number of head of household CFU,x,x,x,x,x,x,x,x,x,x,x,x
+SameName ,SAMENAME,,x,x,Surnames shared within household,x,x,x,x,x,x,x,x,x,x,x,x
+CFU,CFU,,x,x,Conjugal family unit (CFU) of individual ,x,x,x,x,x,x,x,x,x,x,x,x
+n_CFUs,N_CFU,,x,x,Number of CFUs within the family group,x,x,x,x,x,x,x,x,x,x,x,x
+tn_CFUs,TN_CFU,,x,x,Total number of CFUs within house,x,x,x,x,x,x,x,x,x,x,x,x
+CFUsize,CFUSIZE,,x,x,Size of CFU in which individual living,x,x,x,x,x,x,x,x,x,x,x,x
+Spouse,SPOUSE,,x,x,Personid of spouse (if present),x,x,x,x,x,x,x,x,x,x,x,x
+Father,FATHER,,x,x,Personid of father (if present),x,x,x,x,x,x,x,x,x,x,x,x
+Mother,MOTHER,,x,x,Personid of mother (if present),x,x,x,x,x,x,x,x,x,x,x,x
+f_Off,F_OFF,,x,x,Number of female never married offspring  individual living with,x,x,x,x,x,x,x,x,x,x,x,x
+m_Off,M_OFF,,x,x,Number of male never married offspring  individual living with,x,x,x,x,x,x,x,x,x,x,x,x
+m_Offm,M_OFFM,,x,x,Number of male ever married offspring  individual living with,x,x,x,x,x,x,x,x,x,x,x,x
+f_Offm,F_OFFM,,x,x,Number of female ever married offspring  individual living with,x,x,x,x,x,x,x,x,x,x,x,x
+Offsp,OFFSP,,x,x,Total number of never married offspring individual living with,x,x,x,x,x,x,x,x,x,x,x,x
+Kids,KIDS,,x,x,Total number of children individual living with,x,x,x,x,x,x,x,x,x,x,x,x
+Relats,RELATS,,x,x,Total number of relatives individual living with,x,x,x,x,x,x,x,x,x,x,x,x
+Inmates,INMATES,,x,x,Total number of inmates individual living with,x,x,x,x,x,x,x,x,x,x,x,x
+Servts,SERVTS,,x,x,Total number of servants individual living with,x,x,x,x,x,x,x,x,x,x,x,x
+Non_Rels,NON_RELS,,x,x,Total number of non-kin individual living with,x,x,x,x,x,x,x,x,x,x,x,x
+Visitors,VISITORS,,x,x,Total number of children individual living with,x,x,x,x,x,x,x,x,x,x,x,x
