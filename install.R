@@ -1,1 +1,1 @@
-install.packages(c("tidyverse","repr"))
+install.packages(c("tidyverse","repr","rmarkdown"))
