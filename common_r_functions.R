@@ -61,7 +61,7 @@ load_census <- function(census_file, census_variables, column_code) {
 
     code_columns <- columns_by_census %>%
     filter(census_name == 'EW51' & has_variable) %>%
-    filter(!(VariableName %in% c("H_Sex", "Sex"))) %>%
+    filter(!(VariableName %in% c("H_Sex", "Sex", "Parish"))) %>%
     left_join(column_labels, by = 'VariableName') %>%
     filter(AnonymisedVersion & Coded) %>%
     select("VariableName")
