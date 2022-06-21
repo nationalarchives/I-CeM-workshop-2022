@@ -1,7 +1,6 @@
 get_parish_return_table <- function(census_data) {
     parish_return <- census_data %>% 
-        distinct(Year, ParID, RegCnty, RegDist, SubDist, Parish, Population, MalePop, FemalePop, ParType) %>%
-        mutate(ParType = ifelse(is.na(ParType), -1, ParType))
+        distinct(Year, ParID, RegCnty, RegDist, SubDist, Parish, Population, MalePop, FemalePop, ParType)
     return(parish_return)
 }
 
