@@ -14,11 +14,13 @@ get_household_table <- function(census_data) {
 
 get_unit_table <- function(census_data) {
     census_cfu <- census_data %>% filter(CFU != 0) %>%
-        mutate(H_ID = paste0(Year, '_', ParID, "_", H), UNIT_ID = paste0(Year, '_', ParID, "_", H, "_", CFU), IS_CFU = TRUE, IS_H_CFU = (CFU == H_CFU), CFUsize = as.integer(CFUsize)) %>%
+        mutate(H_ID = paste0(Year, '_', ParID, "_", H), UNIT_ID = paste0(Year, '_', ParID, "_", H, "_", CFU),
+               IS_CFU = TRUE, IS_H_CFU = (CFU == H_CFU), UnitSize = as.integer(CFUsize)) %>%
         distinct (UNIT_ID, H_ID, Year, CFU, H_CFU, n_CFUs, CFUsize, HHD, IS_CFU, IS_H_CFU)
     census_non_cfu <- census_data %>% filter(CFU == 0) %>%
-        mutate(H_ID = paste0(Year, '_', ParID, "_", H), UNIT_ID = paste0(Year, '_', ParID, "_", H, "_", CFU, "_", HHD), IS_CFU = FALSE, IS_H_CFU = FALSE) %>%
-        group_by (UNIT_ID, H_ID, Year, CFU, H_CFU, n_CFUs, HHD, IS_CFU, IS_H_CFU) %>% summarise(CFUsize = n())
+        mutate(H_ID = paste0(Year, '_', ParID, "_", H), UNIT_ID = paste0(Year, '_', ParID, "_", H, "_", CFU, "_", HHD),
+               IS_CFU = FALSE, IS_H_CFU = FALSE) %>%
+        group_by (UNIT_ID, H_ID, Year, CFU, H_CFU, n_CFUs, HHD, IS_CFU, IS_H_CFU) %>% summarise(UnitSize = n())
     census_unit <- bind_rows(census_cfu, census_non_cfu)
     return(census_unit)
 }
