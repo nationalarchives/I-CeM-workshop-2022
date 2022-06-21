@@ -8,7 +8,7 @@ get_household_table <- function(census_data) {
     census_household <- census_data %>%
         mutate(H_ID = paste0(Year, '_', ParID, '_', H)) %>%
         mutate(across(c('HSS','tn_CFUs','H_CFU'), as.numeric)) %>%
-        mutate(H_Age = as.integer(H_Age), H_Age_Band = as.integer(H_Age/5) * 5) %>%
+        mutate(H_Age_Band = ifelse(H_Age == -1, -1, as.integer(H_Age/5) * 5) %>%
             distinct (H_ID, Year, ParID, H, HSS, H_Sex, H_Age, H_Age_Band, H_Occ, H_CFU, tn_CFUs)
     return(census_household)
 }
