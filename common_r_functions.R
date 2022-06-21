@@ -71,10 +71,10 @@ load_census <- function(census_file, census_variables, column_code) {
     filter(AnonymisedVersion & Coded) %>%
     select("VariableName")
     
-    code_columns <- union(as.vector(code_columns), c("ParType", "H_Occ"))
+    numeric_columns <- union(as.vector(str_trim(code_columns$VariableName)), c("ParType", "H_Occ"))
 
     census_data <- source_data %>% select(all_of(str_trim(selected_columns$VariableName))) %>%
-        mutate_at(vars(str_trim(code_columns$VariableName)), as_numeric_def)
+        mutate_at(vars(numeric_columns), as_numeric_def)
 
     source_data <- NULL
     return(census_data)
