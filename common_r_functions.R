@@ -72,6 +72,7 @@ load_census <- function(census_file, census_variables, column_code) {
     select("VariableName")
     
     numeric_columns <- union(as.vector(str_trim(code_columns$VariableName)), c("ParType", "H_Occ"))
+    print(numeric_columns)
 
     census_data <- source_data %>% select(all_of(str_trim(selected_columns$VariableName))) %>%
         mutate_at(vars(numeric_columns), as_numeric_def)
