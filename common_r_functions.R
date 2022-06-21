@@ -65,6 +65,8 @@ load_census <- function(census_file, census_variables, column_code) {
     left_join(column_labels, by = 'VariableName') %>%
     filter(AnonymisedVersion & Coded) %>%
     select("VariableName")
+    
+    code_columns <- union(code_columns, c("ParType"))
 
     census_data <- source_data %>% select(all_of(str_trim(selected_columns$VariableName))) %>%
         mutate_at(vars(str_trim(code_columns$VariableName)), as.numeric)
