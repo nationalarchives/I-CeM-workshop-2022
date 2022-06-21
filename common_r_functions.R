@@ -4,6 +4,11 @@ getExtension <- function(file){
     return(ex[-1])
 } 
 
+as_numeric_def <- function(x) {
+    x_num <- as.numeric(x)
+    ifelse(is.na(x_num), -1, x_num)
+}
+
 fix_header <- function(source_file, output_file) {
 
     if (getExtension(source_file) == 'zip') {
@@ -69,7 +74,7 @@ load_census <- function(census_file, census_variables, column_code) {
     code_columns <- union(code_columns, c("ParType"))
 
     census_data <- source_data %>% select(all_of(str_trim(selected_columns$VariableName))) %>%
-        mutate_at(vars(str_trim(code_columns$VariableName)), as.numeric)
+        mutate_at(vars(str_trim(code_columns$VariableName)), as_numeric_def)
 
     source_data <- NULL
     return(census_data)
