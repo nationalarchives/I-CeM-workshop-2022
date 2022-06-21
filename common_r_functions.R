@@ -75,7 +75,7 @@ load_census <- function(census_file, census_variables, column_code) {
     print(numeric_columns)
 
     census_data <- source_data %>% select(all_of(str_trim(selected_columns$VariableName))) %>%
-        mutate_at(vars(numeric_columns), as_numeric_def)
+        mutate_at(vars(all_of(numeric_columns)), as_numeric_def)
 
     source_data <- NULL
     return(census_data)
