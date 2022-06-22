@@ -71,7 +71,7 @@ load_census <- function(census_file, census_variables, column_code) {
     filter(AnonymisedVersion & Coded) %>%
     select("VariableName")
     
-    not_numeric <- c("Std_Par", "Cnti", "Alt_Cnti", "Ctry", "Alt_Ctry")
+    not_numeric <- c("Cage", "Std_Par", "Cnti", "Alt_Cnti", "Ctry", "Alt_Ctry")
     
     numeric_columns <- union(as.vector(str_trim(code_columns$VariableName)), c("ParType", "H_Occ"))
     print(numeric_columns)
