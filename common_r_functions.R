@@ -32,7 +32,6 @@ fix_header <- function(source_file, output_file) {
         header_row <- append(header_row, 'BLANK_1', after = 84)
         header_row <- append(header_row, 'BLANK_2', after = 85)
         header_row <- paste0(header_row, collapse = '|') #modify header    
-        print(paste0("Needed to fix: ",header_row))
     }
     writeLines(header_row,con=fw) #write header to file
     writeLines(second_row,con=fw) #write header to file
