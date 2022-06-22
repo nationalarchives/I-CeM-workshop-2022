@@ -1,0 +1,84 @@
+Relationship	Code
+Self	0
+Head (gender unspecified)	10
+Head (male)	11
+Head (female)	12
+Spouse	20
+Husband	21
+Wife	22
+Mistress	28
+Child	30
+Son	31
+Daughter	32
+Step son	33
+Step daughter	34
+Son in law	35
+Daughter in law	36
+Adopted/fostered son	37
+Adopted/fostered daughter	38
+Nephew/niece	40
+Nephew	41
+Niece	42
+Step nephew	43
+Step niece	44
+Husband of niece	45
+Wife of nephew	46
+Adopted nephew	47
+Adopted niece	48
+1st cousin once removed	50
+1st cousin once removed (downwards) i.e., son of cousin	51
+1st cousin once removed (downwards) i.e., daughter of cousin	52
+Grandchild	60
+Grandson	61
+Granddaughter	62
+Grand stepson	63
+Grand stepdaughter	64
+Granddaughter’s husband	65
+Grandson’s wife	66
+Adopted grandson	67
+Adopted granddaughter 68
+Great nephew/niece	70
+Great nephew	71
+Great niece	72
+Great step nephew	73
+Great step niece	74
+Great nephew in law	75
+Great niece in law	76
+Great grandchild	80
+Great grandson	81
+Great granddaughter	82
+Grandparent	110
+Grandfather	111
+Grandmother	112
+Step grandfather	113
+Step grandmother	114
+Grandfather in law	115
+Grandmother in law	116
+Parent	120
+Father	121
+Mother	122
+Step father	123
+Step mother	124
+Father in law	125
+Mother in law	126
+Adoptive father	127
+Adoptive mother	128
+Uncle	131
+Aunt	132
+Step uncle	133
+Step aunt	134
+Uncle in law	135
+Aunt in law	136
+Great uncle	141
+Great aunt	142
+Brother	151
+Sister	152
+Step brother	153
+Step sister	154
+Brother in law	155
+Sister in law	156
+Half brother	157
+Half sister	158
+First cousin	160
+Second cousin	170
+Miscellaneous relative	190

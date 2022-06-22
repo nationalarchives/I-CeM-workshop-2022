@@ -1,0 +1,25 @@
+RoleName	Code
+Visitor	2000
+Lodger	3000
+Boarder	4000
+Inmate	5000
+Pauper/Almsperson etc.	5200
+Patients/Lunatics, etc.	5300
+Prisoners, etc., in correctional institutions	5400
+Scholars	5500
+Students	5600
+Foundlings/orphans	5700
+Religious house inmates	5750
+Army	5800
+Navy	5900
+Servant	6000
+Domestic servant	6200
+Housekeeper	6210
+Governess	6220
+School teacher, etc.	6300
+Apprentice	6500
+Assistants	6600
+Journeymen	6700
+Farm servant titles	6800
+Others with "working" titles	6900
+No relationship given	9000
