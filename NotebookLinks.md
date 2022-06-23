@@ -13,4 +13,4 @@ Notebook 3: Longitudinal analysis
 
 **RStudio hosted on Binder**
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/nationalarchives/I-CeM-workshop-2022/HEAD)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/nationalarchives/I-CeM-workshop-2022/HEAD?lab=rstudio)
