@@ -85,3 +85,24 @@ load_census <- function(census_file, census_variables, column_code) {
 }
 
 
+value_format <- function(in_value) {
+   str_replace_all(str_replace_all(str_replace_all(as.character(in_value), "[a-z]", "a"), "[0-9]", "9"), "[A-Z]", "A")
+}
+
+value_format_compress <- function(in_value) {
+    str_value <- as.character(in_value)
+    chr_values <- utf8ToInt(str_value)
+    chr_compressed <- array()
+    chr_format <- ifelse(chr_values >= 65 & chr_values <= 90, 65,
+        ifelse(chr_values >= 97 & chr_values <= 122, 97, 
+            ifelse(chr_values >= 48 & chr_values <= 57, 57, chr_values)))
+    rle_format <- rle(chr_format)
+    out_string <- ""
+    for (i in 1:length(rle_format$lengths)) {
+        out_string <- paste0(out_string, intToUtf8(rle_format$values[i]))
+        if (rle_format$lengths[i] > 1) {
+            out_string <- paste0(out_string, '*')
+        }
+    }
+    out_string
+}
