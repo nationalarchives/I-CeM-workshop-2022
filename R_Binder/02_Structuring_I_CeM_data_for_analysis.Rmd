@@ -1,0 +1,534 @@
+---
+title: An R Markdown document converted from "Colabs/02_Structuring_I_CeM_data_for_analysis.ipynb"
+output: html_document
+---
+
+Replace the text INSERT FILE NAME HERE with the name of your csv file
+```{r}
+SOURCE_DATA_FILE <- "INSERT FILE NAME HERE"
+```
+
+# Notebook outline
+
+This is the second notebook which accompanies the workshop "Applying computational methods to census data from I-CeM" run by The National Archives on 28th June 2022.
+
+The notebook introduces the principles of data normalisation and works through the process of splitting the I-CeM data into separate tables. A number of lookup tables are then imported to complete the process.
+
+# Initial setup
+
+This section loads the same libraries and data loading functions as notebook 1. It then creates a set of functions which will be used for the normalisation process. They will be explained in turn as they are used so there is no need to look closely at them now.
+
+You can run the hidden cells without expanding this section.
+
+```{r}
+library(tidyverse)
+library(repr)
+
+options(width = 1000, dplyr.width = 1000)
+options(repr.plot.width=18, repr.plot.height=7, warn = -1, dplyr.summarise.inform = FALSE)
+```
+
+The functions contained in the following script load census files and generate the normalised data tables. They will be explained at various points in the notebook.
+
+```{r}
+source('https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/common_r_functions.R')
+source('https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/table_creation_functions.R')
+```
+
+```{r}
+variable_file <- 'https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/Data/census%20variable%20descriptions.csv'
+variables <- read.csv(variable_file)
+occode_file <- 'https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/Data/occode_lookup.tsv'
+occode_lookup <- read.csv(occode_file, sep = '\t')
+```
+
+```{r}
+
+```
+
+# Loading the data file
+
+We will follow the same steps as for the first notebook. Upload the data file to Colab and then copy and paste its path into the form below. This time the columns will be automatically reduced to the set of E&W 1851 columns.
+
+```{r}
+#@title ...Enter source data file name { run: "auto", vertical-output: true, form-width: "50%", display-mode: "form" }
+
+#occode_lookup <- read_tsv('/content/occode_lookup.tsv', col_names = TRUE)
+#occode_lookup <- occode_lookup %>% mutate(Occode = as.character(Occode))
+
+fix_header(SOURCE_DATA_FILE, 'temporary_file.txt')
+census_data <- load_census('temporary_file.txt', variables, 'EW51')
+paste(c("Rows:",nrow(census_data), "Columns:", ncol(census_data)), sep = " ")
+```
+
+# Data normalisation
+
+
+## Motivations for normalising data
+
+Normalisation is a process of cleaning and structuring data in a relational database with the following aims:
+
+
+1.   Reduce duplication
+2.   Improve data integrity
+
+
+One motivation for reducing duplication is to save space. Another reason can be demonstrated by finding the total of the Population column. We know there are c.24000 individuals in the Rutland dataset, yet when we calculate the sum of Population we get a much larger figure.
+
+```{r}
+census_data %>% summarise(Population = sum(Population))
+```
+
+Why does this happen? Each row of data contains a mixture of details about individuals, and information about the Parish where they resided on the day of the census. The details of the Parish are taken from aggregated *Census Reports*. The following query demonstrates the repetition of Parish details. As part of the normalisation process we will create a separate table for each Parish
+
+```{r}
+census_data %>% filter(Censusref == 'HO107/2093/80/60' & H == 219) %>% select(RecID, ParID, RegDist, Parish, Population, PID)
+```
+
+## The Parish table
+
+Here is a reminder of the columns in the data. We can see that all but one of the columns before Censusref (column 20) are related to the Parish. The one to exclude is RecID which is the unique reference for each row of data. The ParID column gives a unique ID to each Parish. To verify that the Parish table has been created correctly, we will check that there is only one row per ParID.
+
+```{r}
+colnames(census_data)
+```
+
+The **distinct** function in dplyr returns all unique combinations of the columns named in the parentheses. We use this to create a new table called **parish_return**. If we select the right columns then each ParID will appear on only one row. We will run a query at the end to check this. The checking query counts records by ParID and then returns (via **filter**) the ones with a count greater than 1. It should return no rows.
+
+```{r}
+parish_return <- get_parish_return_table(census_data)
+
+# Perform the check here
+parish_return %>% group_by(ParID) %>% summarise(n = n()) %>% filter(n > 1)
+```
+
+### Explanation of parish return table - expand to read
+
+If you wish to see the code which produces this table just print out the get_parish_return_table, as follows
+
+```{r}
+get_parish_return_table
+```
+
+The function uses the distinct function from dplyr to find only unique combinations of the fields selected. The fields are carefully selected to result in only one row per parish. A parish is uniquely defined by the ParID field, so that is used to confirm the correct fields have been chosen.
+
+## Using the parish return table
+
+Next we compare the total population with the numbers of rows in the data.
+
+```{r}
+paste0("Data rows: ",nrow(census_data))
+paste0("")
+parish_return %>% summarise(Population = sum(Population))
+```
+
+They are different! Before investigating the data we should consider why this might be. The Population figures are not derived directly from this data but are instead taken from the census reports. So it should not be entirely unexpected to find some discrepancies in the data. We can quantify the difference as a percentage, which shows that the number of detail rows in the data is 99.8% of the population total.
+
+Summarising by individual Parish gives a more nuanced view, and we see that in some cases the record count (the census_rows column) is greater than the Population value, while in Pilton it is markedly lower (33.7%). Note, this is not all parishes, only those where the two figures differ. The Population column provides the official total but the differing figures derived from the detail records suggest care should be taken when using those for population level statistics.
+
+```{r}
+census_data %>%
+ group_by(ParID) %>%
+ summarise(census_rows = n()) %>%
+ inner_join(parish_return, by = 'ParID') %>%
+ select(ParID, Parish, census_rows, Population) %>%
+ filter(Population != census_rows) %>% mutate(pct = (census_rows/Population)*100) 
+```
+
+Another difference worth highlighting is that the Population value is the total of the MalePop and FemalePop values. However, in the detail records we have three possible values for Sex: M, F, U.
+
+```{r}
+parish_return %>% summarise(MalePop = sum(MalePop), FemalePop = sum(FemalePop), TotalPop = sum(Population))
+```
+
+We could continue the normalisation process by creating separate tables for Districts and SubDistricts, but for the purpose of this workshop we will keep these in the Parish table.
+
+## Household table
+
+The next step of normalisation will be to look at households. Here is another reminder of the available columns.
+
+```{r}
+colnames(census_data)
+```
+
+A household is identified by the H column which is unique for each Parish. We will therefore create a unique identifier which is a combination of ParID and H by concatenating them together, separated by an underscore. The paste0 function in R will achieve this, and we will call the new column H_ID. The remainder of the columns selected should once again result in one row per H_ID.
+
+The columns H_Sex, H_Age, H_Occ, H_CFU all relate to the head of the household. HSS is a code which describes the make up of the household. tn_CFUs counts the number of Conjugal Family Units (CFUs) in the household. More on those in the next section.
+
+We are also adding a new column called H_Age_Band which will round the age down to the nearest 5 (e.g. 37 becomes 35; interpret 35 as 35-39).
+The distinct function is used again and a new table ew51_household is created. As with the Parish data, we will check no H_ID appears more than once.
+
+```{r}
+census_household <- get_household_table(census_data)
+
+# Check for duplicate H_IDs
+census_household %>% group_by(H_ID) %>% summarise(n = n()) %>% filter(n > 1)
+```
+
+### Explanation of the household table - expand to read
+
+To see how the household table is created run this cell
+
+```{r}
+get_household_table
+```
+
+To create the household table we start by assigning a unique id for each household. In the I-CeM data the H column is a sequential id which is unique within a parish. Therefore within an individual census a combination of ParID and H should be unique. However, for longitundinal analysis (notebook 3) we also incorporate the Year since the ParID for any particular parish is different in each census.
+
+The second step is to create an Age Band field for the household head. This simply rounds the age down to the nearest 5 to match the age bands seen in Nesstar. If the Age is unknown we set it to -1.
+
+The distinct function is used to select unique combinations of column values.
+
+### Using the household table
+
+Using this table we can count households and see the gender breakdown of household heads - just over 16% are female.
+
+```{r}
+census_household %>% summarise(Households = n())
+households <- nrow(census_household)
+paste0('')
+census_household %>% group_by(H_Sex) %>% summarise(n = n(), pct = 100*n()/households)
+```
+
+### Ages of heads of households
+
+More interestingly, we can compare the age bands between genders. The 'U' value has been filtered out for clarity of visualisation. The chart shows a clear difference in age distribution between the sexes, with Female heads of households being on average much older than their male counterparts. This is expected as female heads of household were generally widows.
+
+```{r}
+census_household %>%
+    filter(H_Sex != 'U') %>% 
+    group_by(H_Sex, H_Age_Band) %>% 
+    summarise(n = n()) %>% 
+    mutate(pct = n/sum(n)) %>%
+        ggplot + geom_bar(aes(x = H_Age_Band, y = pct, fill = H_Sex), stat='identity', position = 'dodge', width = 5) +
+            scale_fill_manual(values = c("#112E51", "#78909C")) + scale_x_continuous(breaks = seq(0, 100, by = 5))
+```
+
+### Occupations of heads of households
+
+To confirm this we will need to bring in a lookup table for occupations. The I-CeM documentation includes tables of encoded values and their descriptions, but I-CeM also provides spreadsheet versions of these tables. The occode_lookup.tsv file hosted in the workshop Github repository is one such example. (Note: the original file is at Excel file, it was converted to .tsv - tab separated values - for ease of loading). At the beginning of the notebook it was loaded into a table called occode_lookup. We will use this lookup to visualise occupations for heads of households, split by gender.
+
+The code for this visualisation is more involved than we've seen so far. 
+
+The query is split into four parts for clarity but could be merged into one. Here is a summary of the stages, but for a fuller explanation and to see the code expand the hidden section.
+
+The stages are:
+
+
+1.   Find the top 5 occupations by gender ('U' filtered out)
+2.   Find all households where the head matches that list on gender and occupation code. Get the Level 3 descriptions from the lookup table.
+3.   Summarise the records by sex, age band and description. For each sex/description combination calculate the proportion of the total count (for the combination) for each age band.
+4.   Visualise in a bar chart for each gender. Each bar shows the age band proportion using a blue to red colour scale.
+
+Discussion will follow the bar chart.
+
+
+### Code to build occupation by age and gender bar chart - expand to read or click arrow to run
+
+Stage 1: Get most common occupations by gender. Unknown occupations and genders, and under 18s are filtered out. The records are grouped by gender and occupation of the head of household and counted. The top 5 occupations by gender are found, using the slice_max function. Finally, a percentage within the group is calculated for each occupation.
+
+```{r}
+top_n_occodes <- census_household %>% 
+    filter(H_Occ != -1 & H_Sex != 'U' & H_Age >= 18) %>% 
+    group_by(H_Sex, H_Occ) %>% 
+    summarise(count=n()) %>% 
+    slice_max(order_by = count, n = 5) %>%
+    mutate(pct = count/sum(count))
+```
+
+Stage 2: Records with most common occupations. Using these top 5 occupations (by gender) we find heads of household have one of these occupation, and match on gender.
+
+The occode_lookup table is used to convert codes to occupation names. The str_wrap function is used for display purposes.
+
+```{r}
+top_n_descriptions <- top_n_occodes %>%
+  inner_join(census_household, by = c('H_Sex','H_Occ')) %>%
+  select(H_Occ, H_Sex, H_Age_Band) %>%
+  inner_join(occode_lookup, by = c('H_Occ' = 'Occode')) %>%
+  mutate(Occupation = str_wrap(paste0(Level3," (", H_Occ, ")"), 20))
+```
+
+Stage 3: Summarise the records by sex, age band and description. Records are grouped by these three fields and counted in each group. A percentage of the total is calculated for each occupation.
+
+```{r}
+h_sex_age_occ_summary <- top_n_descriptions %>%
+  group_by(H_Sex, H_Age_Band, Occupation) %>% 
+  summarise(age_count = n()) %>%
+  mutate(age_pct = age_count/sum(age_count)) 
+```
+
+Stage 4: Visualise bar chart. A bar chart is created using the ggplot function to show percentage for each description. The bars are stacked with a separate colour for each age band. The facet_wrap function splits the data across two charts, one for each gender. The remaining parts of the code control the display (e.g. colours).
+
+```{r}
+h_sex_age_occ_summary  %>%
+ ggplot(aes(x=Occupation, y=age_pct, fill = H_Age_Band))  +
+ coord_flip() + facet_wrap(facets = vars(H_Sex)) +
+ geom_bar(stat='identity')  +
+  scale_fill_gradient2(low="blue", mid = "white", high="red", midpoint = 50, na.value = "grey", limits = c(15, 90)) + 
+   theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+```
+
+### Barchart discussion
+
+There are a number of interesting patterns evident in the chart. Here we discuss a few of them:
+
+
+On the female side:
+
+*   The majority of women are classed as not working (widows, no occupation) or supported by private means. Their ages are skewed towards older age groups.
+*   The employed women are either farmers/graziers or supporting their husbands' occupations. The latter group are generally in the younger age groups.
+
+On the male side:
+
+*   A high percentage of Shoe and boot makers/repairers have no age. That would be worthy of further investigation in the data.
+*   Farmers/Graziers are skewed towards older ages, while farm labourers are slightly skewed towards the younger age bands.
+
+
+This is an opportunity to explore the mappings of textual occupation values to their encoded values. If we choose Occode 778 which stands for Private Means we see the range of values that are considered to have that meaning. Annuitant (including an alternative spelling) is by far the highest, but we also see values such as fund holder, and proprietor of houses. This demonstrates the value of the encodings but also the challenges in defining the mappings.
+
+Note: the Occodes in the chart above are in brackets after the descriptions. Feel free to try other values in the query.
+
+```{r}
+census_data %>% 
+    filter(Occode == 778 & Sex == 'F') %>%
+     group_by(Occ) %>% 
+     summarise(n = n()) %>% 
+     arrange(-n) %>% 
+     head(10)
+```
+
+## Conjugal Family Units (CFU)
+
+The Conjugal Family Unit (CFU) is used to group together members of the same biological family. The I-CeM User Guide lists three ways in which a CFU is formed:
+
+*   by married couples without offspring
+*   by a married couple with never-married offspring and/or never-married adopted/foster children
+*   by a lone parent with at least one never-married child
+
+A household may contain multiple CFUs and members of the household who are not part of a CFU are given a CFU of 0 (zero). Members of the first CFU (generally including the head, if they meet the criteria) get a CFU value of 1, the second CFU is value 2, and so on (although beyond 2 is probably rare).
+
+### Unit table
+
+We will build separate tables for CFUs and household members who are not in a CFU. These tables will then be merged into one table which will be called household_unit
+
+```{r}
+household_unit <- get_unit_table(census_data)
+```
+
+### Explanation of unit table code - expand to read
+
+To view the code for creating the household_unit table print the get_unit_table function
+
+```{r}
+get_unit_table
+```
+
+There are two parts to building this table. The first is to identify records of CFUs. These are identified by the CFU field having a value other than 0. We create a unique identifier called UNIT_ID which is a concatenation of the household identifier and the CFU.
+
+Indicator variables IS_CFU and IS_H_CFU are created to show whether a record represents a CFU and if it is the head of household's CFU, respectively.
+
+The CFUsize is renamed to UnitSize as not all units in this table are CFUs.
+
+The second part is to create a table for the non-CFU records. In this case the UNIT_ID also incorporates the HHD field (since the CFU vaue is always 0) to maintain uniqueness. There is no CFUsize so the UnitSize is calculated by grouping by the unique fields and counting records.
+
+Finally the two tables are merged together to form a single census_unit table.
+
+# Individuals
+
+### Person table
+
+Before we start analysing the unit table we will create a table for people. It will make checking results more pleasant if we trim some columns first. Since the source data is already at the level of the individual the RecId would usually suffice as a unique person id. However, the next stage will be easier with a constructed Id which will be called PersonID to distinguish it from the PID.
+
+We will also create household and unit Ids in order to provide a link back to the tables that have just been created. Usually when normalising data we wouldn't put the H_ID in this table and retrieve it from the appropriate Unit record. However, for the sake of pragmatism and fewer joins we will include it.
+
+```{r}
+census_person <- get_person_table(census_data)
+```
+
+### Explanation of person table code - expand to read
+
+If you wish to see the code of the get_person_table function run the next cell
+
+```{r}
+get_person_table
+```
+
+Since the census data is already at an individual level it would seem reasonable to use the RecID as a unique identifier for a person. However, this doesn't work once we get to longitudinal analysis. Instead we will use the household identifier concatenated with the PID which is unique within a household. This means we have a set of consistent identifiers constructed from the household id.
+
+Technically the household id is not required for this table since it can be found by linking across to the Unit table (via the UNIT_ID which is included). However, for the sake of pragmatism and reducing the number of table joins, it is included.
+
+Next, the Age_Band column is added in the same way as the one in the household table.
+
+The final derived columns are from the Rela column which details the relationship of a person to the head of the household. This is a little convoluted since the Rela value can sometimes include two pieces of information - for example, the code 32 represents a Son, but the Son of a lodger would be 3032 with the 3000 signifying they are related to the lodger. The lodger themself would be 3000.
+Things are further complicated by the fact that the second part is in the range 0-199, but values like 6200 are self contained - 200 on its own doesn't have a meaning. 
+The I-CeM guide has a full list of codes and their meanings and it is worth reading that before trying to unpick the code.
+
+The separated out values then link to two lookup tables which allow us to, for example, query for lodgers and their families.
+
+### Relation table
+
+Finally we create a table of immediate family relations (spouse, father, mother, child). This will be achieved in two stages.
+
+The first stage will use a function of dplyr which enables Tidy Data principles to be followed. Rather than separate columns for Spouse, Father, Mother, there should be a single column for the relationship, and one for the Id of the relation.
+
+dplyr provides the pivot_longer function to achieve this transformation. The function is passed a list of column names which will become the values in a single column we will call 'relation'. The PIDs currently held in the columns will be moved to a column called RelID.
+
+For example, if the value in the Spouse column is 2, a row will be created with the value 'Spouse' in the relation column, and 2 in the RelID column.
+
+In order to facilitate joining back to the person table we will then concatenate the H_ID to the RelID value, so that their construction matches that of the PersonID.
+
+The second stage is to reverse the Mother/Father relations to create Child relations. A summary of the resulting table is output at the end.
+
+```{r}
+person_relation <- get_relation_table(census_data)
+```
+
+### Explanation of the person relation table - expand to read
+
+To view the code print the get_relation_table function
+
+```{r}
+get_relation_table
+```
+
+This is another two part table creation script. The table links to the Person table and is derived from the Father, Mother and Spouse columns of the census data.
+It uses the pivot_longer function to convert those columns to individual rows. Columns 'relation' (containing values Father, Mother or Spouse) and RelID (containing the person id of the Father/Mother/Spouse) are created by the function.
+
+The second stage is to derive Child relationships by simply reversing Father and Mother relationships and creating new rows with the person ids swapped around. The value in the relation column is set to 'Child' for these records.
+
+The person_relations table is created by merging the two tables together.
+
+### Data integrity checks
+
+We would expect the UNIT_ID to be unique for each row in the Unit table. However, the query to check this returns 6 rows.
+
+```{r}
+household_unit %>% group_by(UNIT_ID) %>% summarise(n = n()) %>% filter(n > 1)
+```
+
+We can use the new Person table to examine a household - remove the "_1" from the end of one of the UNIT_IDs to get the H_ID.
+
+The H_ID=1851_9475_56 example shows a household containing two families. There's the head of the family and his wife and son, and then there is a lodger with his wife and daughter. If we also look in the Unit table there is one CFU of size 6 but two different HHD values.
+
+Using the Relation table we also find that while person 5 is correctly stated as the Spouse of person 4, their daughter has person 1 (the head) as her father. Having checked the original census record this is incorrect. There is obviously something in the records which has caused a breakdown of the logic in deriving family units. These 6 records may represent a small percentage of similar situations but it highlights why it is worth building integrity checks into any process which involves data reformatting, and it also shows that we should always check derived values.
+
+```{r}
+census_person %>% filter(H_ID == '1851_9475_56') %>% print
+
+household_unit %>% filter(H_ID == '1851_9475_56')
+
+person_relation %>% filter(PersonID == '1851_9475_56_6')
+
+person_relation %>% filter(PersonID == '1851_9475_56_4')
+```
+
+# Using the normalised tables
+
+### Querying the Unit table
+
+The CFUsize column allows us to calculate the distribution of family sizes. Note that is begins at 2, as per the definition of a CFU. The largest family has 13 members!
+
+```{r}
+household_unit %>% filter(IS_CFU == TRUE) %>% group_by(UnitSize) %>% summarise(n = n())
+```
+
+Here are the members of the largest family unit
+
+```{r}
+household_unit %>% filter(IS_CFU == TRUE & UnitSize == 13)
+
+census_person %>% filter(H_ID == '1851_9495_337') %>% print(n=15)
+```
+
+We can also look at the household with the most non-CFU residents. There are 36 of them in a household of 44!
+
+```{r}
+household_unit %>% filter(IS_CFU == FALSE & UnitSize == 36)
+
+census_person %>% filter(H_ID == '1851_9467_110') %>% print(n=50)
+```
+
+We can also look at the Relat column (relationship to head) for non-CFUs to see who else is living in households outside of the main family. Here are the top 10 values.
+
+```{r}
+household_unit %>%
+ filter(IS_CFU == FALSE) %>% 
+ inner_join(census_person, by = 'UNIT_ID') %>%
+ group_by(Relat) %>%
+ summarise(n = n()) %>%
+ arrange(-n) %>% head(10)
+```
+
+### Querying the Relation table
+
+Finally we will use the relations table to compare Father and Son occupations.
+This is achieved in four stages, although they're performed in one query here.
+
+
+
+1.   Identify all of the Fathers in the Relation table
+2.   Join the Fathers to the Person table to get their details (Occupation and Age)
+3.   Link the result to the Person table again to get the details of the Child, the filter to restrict the result to sons
+4.   Join twice to the occupation lookup table get the Level 3 descriptions for father and son respectively
+
+The first 3 rows of the father_son table are printed
+
+```{r}
+father_son <- person_relation %>%
+    filter(relation == 'Father') %>%
+    inner_join(census_person, by = c("RelID" = "PersonID")) %>%
+    select(FatherID = RelID, FatherOcc = Occ, FatherOccode = Occode, FatherAge = Age, SonID = PersonID) %>%
+    inner_join(census_person, by = c("SonID" = "PersonID")) %>%
+    filter(Sex == 'M') %>%
+    select(FatherID, FatherOcc, FatherOccode, FatherAge, SonID, SonOccCode = Occode, SonAge = Age) %>%
+    inner_join(occode_lookup, by = c('FatherOccode' = 'Occode')) %>% mutate(FatherOccDesc = Level3) %>%
+    select(-Level1, -Level2, -Level3) %>%
+    inner_join(occode_lookup, by = c('SonOccCode' = 'Occode')) %>% mutate(SonOccDesc = Level3) %>%
+    select(-Level1, -Level2, -Level3)
+    
+father_son %>% head(3)
+```
+
+Then we create a summary grouped by father and son occupation descriptions and visualise it as a point plot - the father's occupation on the X axis, the son's on the Y axis. The points have been coloured to indicate when father and son share an occupation. Sons younger than 10 and combinations with counts under 6 are filtered out.
+
+Tip: right click on the visualisation and select "View image in new tab" to see it full size.
+
+```{r}
+options(repr.plot.width=15, repr.plot.height=10)
+
+father_son %>%
+    filter(SonAge > 9) %>%
+   group_by(FatherOccDesc, SonOccDesc) %>% summarise(count = n()) %>%
+   filter(count > 5) %>%
+   ggplot + geom_point(aes(x = str_wrap(FatherOccDesc, 30), y = str_wrap(SonOccDesc,60), size = count,
+                           colour = FatherOccDesc == SonOccDesc)) +
+   theme(axis.text.x=element_text(size=7, angle = 90, vjust = 1, hjust=1),
+         axis.text.y=element_text(size=6, angle = 0, vjust = 1, hjust=1),
+        axis.title=element_text(size=14,face="bold"),
+        panel.background = element_rect(fill = 'white', colour = 'black')) +
+    scale_colour_manual(values = c("#003b49", "#dc582a", "#d6d2c4")) +
+    labs(
+        x = "Father's Occupation",
+        y = "Son's Occupation",
+        colour = "Same Occupation",
+        size = "Count"
+   )
+   
+```
+
+# Summary of notebook 2
+
+This notebook focused on data normalisation. Beginning with an introduction to the principles of, and motivations behind, normalisation, it then created 5 new tables from the original census data:
+
+
+
+*   Parish Returns: details of individual parishes including counts from census reports
+*   Households: a record per household including details of the head of the household
+*   Units: conjugal family units within a household, and other residents
+*   People: individuals in the census
+*   Relations: parent/child and spousal relationships between individuals
+
+We also used the tables to produce summary tables and visualisations. Some of these queries would have been very complex using the original census data table.
+
