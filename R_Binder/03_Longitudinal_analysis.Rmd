@@ -7,12 +7,6 @@ output:
 runtime: shiny
 ---
 
-Replace the text INSERT FILE NAME HERE with the name of your csv file
-```{r}
-SOURCE_DATA_FILE <- "INSERT FILE NAME HERE"
-```
-
-
 
 # Notebook outline
 
@@ -70,7 +64,7 @@ household_unit <- NULL
 census_person <- NULL
 person_relation <- NULL
 
-for (f in list.files(".", "*.zip"))
+for (f in list.files(".", "*.csv"))
 { 
     print(paste0("Loading file: ",f))
     fix_header(f, 'temporary_file.txt')
@@ -332,7 +326,7 @@ selectInput("EndYear", "End Year",
 
 #EndYear = '1911' #@param [1871, 1881, 1891, 1901, 1911]
 
-
+renderTable({
 occ_by_year %>% filter(Year == input$StartYear & new_occ == TRUE) %>%
     select(people_start = people, Occode) %>%
     inner_join(occ_by_year, by = 'Occode') %>%
@@ -342,6 +336,8 @@ occ_by_year %>% filter(Year == input$StartYear & new_occ == TRUE) %>%
     inner_join(occode_lookup, by = 'Occode') %>%
     mutate(Occupation = paste0(Level3, " (", Occode, ")")) %>%
     select(Occode, people_start, people_end, Occupation)
+})
+
 ```
 
 A violin plot is used to show the distribution of a numerical variable. It has similarities to a boxplot but while the boxplot displays summary statistics the violin plot can show how the density (think frequency or count) of values varies. In the following plot we can see the distribution of Age for a selected occupation, split by Sex when both genders are found in that occupation.
@@ -350,16 +346,22 @@ Below the violin plot is a simple bar chart showing counts by year and sex.
 
 ```{r}
 #@title Enter an occupation name (copy and paste from above) { run: "auto", vertical-output: true }
-Occupation = "DOMESTIC INDOOR SERVANTS IN HOTELS, LODGING HOUSES AND EATING HOUSES" #@param {type:"string"}
+textInput("Occupation", "Enter Occupation (copy and paste recommended)", value = "DOMESTIC INDOOR SERVANTS IN HOTELS, LODGING HOUSES AND EATING HOUSES") #@param {type:"string"}
 
-occode_lookup %>% filter(Level3 == Occupation) %>%
+renderPlot({
+occode_lookup %>% filter(Level3 == input$Occupation) %>%
     inner_join(census_person, by = 'Occode') %>%
     ggplot + geom_violin(aes(factor(Year), Age, fill = Sex)) + labs(x = "Year")
+})
 
-occode_lookup %>% filter(Level3 == Occupation) %>%
+renderPlot({
+occode_lookup %>% filter(Level3 == input$Occupation) %>%
     inner_join(census_person, by = 'Occode') %>%
     group_by(Year, Sex) %>% summarise(count = n()) %>%
     ggplot + geom_bar(aes(x = factor(Year), y = count, fill = Sex), position = 'dodge', stat = 'identity') + labs(x = "Year")
+
+})
+
 ```
 
 # Notebook summary
