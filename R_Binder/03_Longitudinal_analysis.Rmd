@@ -1,0 +1,372 @@
+---
+title: Notebook 3 - Longitudinal analysis
+output:
+  html_document:
+    code_folding: hide
+    df_print: paged
+runtime: shiny
+---
+
+Replace the text INSERT FILE NAME HERE with the name of your csv file
+```{r}
+SOURCE_DATA_FILE <- "INSERT FILE NAME HERE"
+```
+
+
+
+# Notebook outline
+
+This is the third notebook which accompanies the workshop "Applying computational methods to census data from I-CeM" run by The National Archives on 28th June 2022.
+
+The notebook follows on from the second notebook by looking at some of the challenges of multi-census analysis.
+
+# Load libraries
+
+The tutorial will use the tidyverse library which contains a number of packages for working with data and implementing Tidy Data principles. The primary packages we will use are dplyr which is used for data manipulation, and ggplot2 for visualisation. The repr package is also used to change the size of visualisations
+
+```{r}
+library(tidyverse)
+library(repr)
+
+options(width = 1000, dplyr.width = 1000)
+options(repr.plot.width=18, repr.plot.height=7, warn = -1, dplyr.summarise.inform = FALSE)
+```
+
+Load file load and table creation functions from Github
+
+```{r}
+source('https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/common_r_functions.R')
+source('https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/table_creation_functions.R')
+```
+
+```{r}
+variable_file <- 'https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/Data/census%20variable%20descriptions.csv'
+variables <- read.csv(variable_file)
+occode_file <- 'https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/Data/occode_lookup.tsv'
+occode_lookup <- read.csv(occode_file, sep = '\t')
+```
+
+```{r}
+familial_file <- 'https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/Data/familial_relations.tsv'
+familial_relation <- read_tsv(familial_file, col_names = TRUE)
+familial_relation <- familial_relation %>% mutate(role = 'FAMILY', role_name = Relationship) %>% select(-Relationship)
+role_file <- 'https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/Data/working_roles.tsv'
+person_role <- read_tsv(role_file, col_names = TRUE)
+person_role <- person_role %>% mutate(role = 'OTHER', role_name = RoleName) %>% select(-RoleName)
+person_role <- bind_rows(familial_relation, person_role)
+group_file <- 'https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/Data/relationship_groups.tsv'
+role_group <- read_tsv(group_file, col_names = TRUE)
+```
+
+# Loading multiple files
+
+
+The following code is going to loop through the zip files you have uploaded and progressively build the normalised version of the dataset. In order to save memory it will empty the source data from memory whenever it is finished with it. This means you won't be able to refer back to the original data in this notebook, but the first two notebooks are always available if you wish to explore a particular file.
+
+```{r}
+parish_return <- NULL
+census_household <- NULL
+household_unit <- NULL
+census_person <- NULL
+person_relation <- NULL
+
+for (f in list.files(".", "*.zip"))
+{ 
+    print(paste0("Loading file: ",f))
+    fix_header(f, 'temporary_file.txt')
+    census_data <- load_census('temporary_file.txt', variables, 'EW51')
+    parish_return <- bind_rows(parish_return, get_parish_return_table(census_data))
+    census_household <- bind_rows(census_household, get_household_table(census_data))
+    household_unit <- bind_rows(household_unit, get_unit_table(census_data))
+    census_person <- bind_rows(census_person, get_person_table(census_data))
+    person_relation <- bind_rows(person_relation, get_relation_table(census_data))
+    census_data <- NULL
+}
+```
+
+## Population over time
+
+Now that we have data spanning multiple years, the first question we might ask is, how does the population change over time? We will use both available methods to count the population: the data from the census reports in the parish_return table, and counting people from the returns.
+
+The first two columns indicate that there is a 3-4000 drop in population between 1851 and 1911. Interestingly there are almost 1000 more person records than appear in the census report for 1911.
+
+The third column counts households in each census, and they have stayed roughly stable over the period.
+
+```{r}
+parish_return %>% group_by(Year) %>% summarise(PopulationReports = sum(Population)) %>%
+inner_join(
+census_person %>% group_by(Year) %>% summarise(PopulationReturns = n()), by = 'Year') %>%
+inner_join(
+census_household %>% group_by(Year) %>% summarise(Households = n()), by = 'Year')
+```
+
+Using the relationship value we can also see trends for different types of household occupant. Between 1851 and 1911 there is a downward shift in almost all categories, although some are not large enough to make a significant difference to the population.
+
+The Family category is the largest and contributes a 2500 reduction in population. While Lodgers decrease considerably, Boarders increase by a greater amount so this may just indicate a change in language.
+The number of working people (not including the main family) has also decreased considerably over the period.
+
+```{r}
+census_person %>% left_join(role_group, by = c("RelationGroup" = "GroupCode")) %>%
+    group_by(Year, GroupName) %>% summarise(n = n()) %>%
+    pivot_wider(values_from = n, names_from = Year)
+```
+
+We can look at each of these groups in turn using the dropdown list.
+
+In the family group it appears that most of the drop can be accounted for a reduction in the number of sons and daughers, and to a lesser extent grandchildren.
+
+Although there are more boarders in 1911 than lodgers in 1851, it appears that boarders are far less likely to bring their families with them.
+
+One of the largest drops over the period is the number of servants which reduces by almost 700 from 1851 to 1911.
+
+```{r}
+#@title Select start and end years { run: "auto", vertical-output: true }
+#Group = 'Family' #@param ["Boarder", "Family", "Inmate", "Lodger", "Visitor", "Working", "No #relationship given"]
+selectInput("Group", "Resident Type",
+            c("Choose one" = "", c("Boarder", "Family", "Inmate", "Lodger", "Visitor", "Working", "No relationship given")),
+            selected = "Family")
+
+
+renderTable({
+
+groupCode <- role_group %>% filter(GroupName == input$Group) %>% select(GroupCode)
+groupCode <- groupCode$GroupCode[1]
+
+census_person %>% filter(RelationGroup == groupCode) %>%
+    left_join(person_role, by = c("relationship" = "Code")) %>%
+    group_by(Year, role_name) %>% summarise(n = n()) %>%
+    pivot_wider(values_from = n, values_fill = 0, names_from = Year)
+})
+
+```
+
+If we look at Sons or Daughters by occupation we see a noticeable reduction in the number of Scholars. Before looking at that more closely, it is worth looking more closely at the figures for Occupations of NA ('.' in the Occode column) and SCHOLARS ETC.
+The numbers vary quite drastically across the three censuses.
+
+The second output table suggests a reason why. In 1881 the number of blank occupations for the 5-15 age group is much lower than the other two years. The I-Cem guide mentions in the section on the 1861 census that "The Preliminary Report notes that the 'Scholar' column did, ‘not perfectly fulfill the object for which the information was sought’". This may explain the difference between 1851 and 1881 but does not explain a shift back to blanks in 1911. Analysing further censuses may reveal whether 1881 was an exception.
+
+The reason for highlighting this example was to draw attention to the fact that variation between censuses may be as much down to the way a census form was interpreted as to population variation.
+
+```{r}
+#@title Select relation { run: "auto", vertical-output: true }
+Relation = 'Daughter' #@param ["Daughter", "Son"]
+selectInput("Relation", "Relation",
+            c("Choose one" = "", c("Daughter", "Son")),
+            selected = "Daughter")
+
+
+renderTable({
+relCode <- ifelse(input$Relation == 'Daughter', 32, 31)
+
+census_person %>%
+    filter(RelationGroup == 0 & relationship == relCode) %>%  # Use 31 for Sons, 32 for Daughters
+    select(PersonID, Occode, Year) %>%
+    left_join(occode_lookup, by = 'Occode') %>%
+    group_by(Year, Occupation = Level3) %>% summarise(People = n()) %>%
+    pivot_wider(values_from = People, values_fill = 0, names_from = Year) %>%
+    ungroup() %>% arrange(desc(`1911`)) %>% head(10)
+
+census_person %>%
+    filter(Occode == -1 & Age > -1 & Age < 20 & RelationGroup == 0 & relationship == relCode) %>%
+    group_by(Year, Age_Band) %>%
+     summarise(People = n()) %>%
+    pivot_wider(values_from = People, values_fill = 0, names_from = Year)
+})
+```
+
+The next query confirms the increase in Scholars across the board in 1881. However, there is a very large drop in 1911 particularly in the 5-9 range which is considerably below 1851 levels.
+
+```{r}
+census_person %>% filter(RelationGroup == 0 & relationship %in% c(31,32)) %>%
+    select(PersonID, Occode, Year, Occ, Age_Band, Age) %>%
+    left_join(occode_lookup, by = 'Occode') %>%
+    filter(Level3 == 'SCHOLARS ETC') %>%
+    group_by(Year, Age_Band) %>% summarise(People = n()) %>%
+    mutate(Pct = as.integer(10000*People/sum(People))/100) %>% 
+    pivot_wider(values_from = c(Pct, People), values_fill = 0, names_from = Year) %>% arrange(Age_Band)
+```
+
+Finally we look at count sons and daughters by age band, and also calculate the percentage for each band against the total number of sons and daughters for the year. What we see is that the relative percentage of younger children reduces from 25.7% to 22% for under 5s and a similar reduction in under 10s. The overall count reduces by over 1500 in these two age groups between 1881 and 1911, despite being stable from 1851 to 1881. This suggests a dramatic drop in birth rate during that period. Again bringing in more censuses would help identify when this occurred.
+
+A chart is also output to clearly visualise this drop.
+
+```{r}
+census_person %>% filter(RelationGroup == 0 & relationship %in% c(31,32)) %>%
+    select(PersonID, Occode, Year, Occ, Age_Band) %>%
+    group_by(Year, Age_Band) %>% summarise(People = n()) %>%
+    mutate(Pct = as.integer(1000*People/sum(People))/10) %>% 
+    filter(Age_Band <= 25) %>%
+    pivot_wider(values_from = c(Pct, People), values_fill = 0, names_from = Year) %>% arrange(Age_Band)
+
+census_person %>% group_by(Year, Age_Band) %>% summarise(count = n()) %>%
+ggplot + geom_bar(aes(x = factor(Age_Band), y = count, fill = factor(Year)), position = 'dodge', stat = 'identity') + 
+            labs(fill="Year", x = "Age Band", y = "Count")
+```
+
+## The Parish table
+
+When it comes to longitudinal analysis we need a different approach to parishes. For an individual parish the ParID column we used as a unique key in the previous notebook will be different in each census year. This means we need to generate a unique id for each parish. We will start by creating a table of unique combinations of RegDist, SubDist and Parish, the assigning an id based on the row number of the record. To distinguish the id from the ParID we will call it Parish_ID.
+
+```{r}
+census_parish <- parish_return %>% 
+    distinct(RegCnty, RegDist, SubDist, Parish) %>%
+    mutate(Parish_ID = row_number())
+
+parish_return <- parish_return %>% 
+    inner_join(census_parish, by = c("RegCnty","RegDist", "SubDist", "Parish")) %>%
+    select(Parish_ID, Year, ParID, RegCnty, RegDist, SubDist, Parish, Population, MalePop, FemalePop, ParType)
+```
+
+```{r}
+parish_return %>% filter(Parish_ID == 5)
+```
+
+We start our exploration at longitudinal trends with a look at population change by parish. The plot below includes five variables:
+
+*   Each parish is along the horizontal axis
+*   The census year is on the vertical axis
+*   The population size is indicated by the size of the symbol
+*   The registration sub district is indicated by the colour of the symbol
+*   The shape of the symbol represents a derived variable: has population changed by more than 20% since the previous sentence?
+
+The derived variable uses dplyr's Lag function which allows comparison between a row and the previous row.
+
+As well as showing population change over time, the plot also highlights a challenge when working with longitudinal data - the parishes themselves change too. There are gaps where new parishes appear, or old parishes disappear (in terms of the census not physically). In other cases parishes which were counted together in one census are treated separately in a subsequent one. Examining the set of parishes beginning with Oakham would be a good starting point. Also note the parish of Wing which changes sub-district in 1911.
+
+```{r}
+options(repr.plot.width=20, repr.plot.height=5)
+change_threshold <- 0.20
+parish_return %>%
+ arrange(Parish_ID, Year) %>%
+ mutate(pop_change = replace_na(ifelse(lag(Parish_ID) == Parish_ID, (Population-lag(Population))/lag(Population), 0), 0)) %>%
+ mutate(change = ifelse(pop_change < -change_threshold, -1, ifelse(pop_change > change_threshold, 1, 0))) %>%
+ ggplot + geom_point(aes(x = Parish, y = factor(Year), size = Population, colour = SubDist, shape = factor(change))) +
+            scale_shape_manual(values = c(25, 16, 24), labels = c("-20%", "-", "+20%")) + guides(shape=guide_legend("Pct Change")) +
+            theme(axis.text.x=element_text(size=7, angle = 60, vjust = 1, hjust=1), legend.direction = "horizontal", legend.position = "top") +
+             ylab("Year")
+```
+
+To view the records for a particular parish, amend the value in quotes in the following query.
+
+```{r}
+parish_return %>% filter(Parish == 'UPPINGHAM')
+```
+
+This analysis suggests that tracking change by parish requires a more complex data model which maps parish movement over time. This is beyond the scope of this workshop and may need to be done on a county by county basis. However, the Rutland data suggests that the parish names are consistent enough to be able to follow merges and de-merges of parishes. For example, 1851 has Blaston separated into two parts, but it becomes one in 1881. "Oakham, Barleythorpe" joins with "Oakham Deanshold" in 1881 and then appears to become "Barleythorpe" in 1911.
+
+Creating a mapping across the whole country is certainly a challenge and it may therefore be easier to work at the district or sub-district level for longitudinal analysis.
+
+## Occupations
+
+Rutland is an agricultural area and so farming dominates occupation statistics for the county. Instead we can look for evidence of new occupations appearing over time.
+
+The following query uses the lag function to compare occupations across different years. It identifies occupations which did not appear in the previous census.
+
+Although the numbers of people employed in new occupations is relatively small, there are still over 100 occupations appearing in 1911 which did not appear in 1881. While many of these may be rare but old occupations we can still find evidence of technological advancement in Rutland. The next query will do this.
+
+```{r}
+occ_by_year <- census_person %>%
+ select(Year, PersonID, Occode) %>%
+ group_by(Occode, Year) %>% summarise(people = n()) %>%
+ arrange(Occode, Year) %>% mutate(new_occ = !(Occode == lag(Occode)), prev_people = lag(people)) %>%
+ mutate(new_occ = ifelse(is.na(new_occ), TRUE, new_occ), prev_people = ifelse(is.na(prev_people), 0, prev_people))
+ 
+ 
+occ_by_year %>%
+ inner_join(occode_lookup, by = 'Occode') %>%
+ mutate(description = Level3) %>%
+ filter(description != 'NA') %>%
+ group_by(Year, new_occ) %>% summarise(occs = n(), people = sum(people), prev_people = sum(prev_people))
+ 
+```
+
+Running this query for males in 1911 we see the emergence of jobs related to motor cars, electricity, and iron works. In 1881 the biggest change is in railway jobs.
+
+For women, in 1881 the main new job is working in the manufacture of hosiery. In 1911 there seem to be a few roles working in factories. The other noticeable role, which also applies to men, is school cleaning and caretaking.
+
+```{r}
+#@title Select year and gender { run: "auto", vertical-output: true }
+selectInput("CensusYear", "Year",
+            c("Choose one" = "", c(1861, 1871, 1881, 1891, 1901, 1911)),
+            selected = 1911)
+#EndYear = '1911' #@param [1861, 1871, 1881, 1891, 1901, 1911]
+
+selectInput("Gender", "Gender",
+            c("Choose one" = "", c("F", "M")),
+            selected = "M")
+#Gender = 'M' #@param ["F", "M"]
+
+
+renderTable({
+census_person %>%
+ filter(Sex == input$Gender) %>%
+ select(Year, PersonID, Occode) %>%
+ group_by(Occode, Year) %>% 
+ summarise(people = n()) %>%
+ arrange(Occode, Year) %>% 
+ mutate(same_occ = Occode == lag(Occode), prev_people = lag(people)) %>%
+ mutate(same_occ = ifelse(is.na(same_occ), FALSE, same_occ), prev_people = ifelse(is.na(prev_people), 0, prev_people)) %>%
+ inner_join(occode_lookup, by = 'Occode') %>%
+ mutate(description = Level3) %>%
+ filter(description != 'NA' & Year == input$CensusYear & !same_occ) %>%
+ group_by(description) %>% 
+ summarise(people = sum(people)) %>% 
+ arrange(-people) %>% head(10)
+})
+
+```
+
+Finally we look at jobs which were new in 1881 which had grown in number by 1911. Again, in such a small county with a dominant agriculture industry the numbers are not large but they do hint to the growth of new industries.
+
+```{r}
+#@title Select start and end years { run: "auto", vertical-output: true }
+selectInput("StartYear", "Start Year",
+            c("Choose one" = "", c(1861, 1871, 1881, 1891, 1901)),
+            selected = 1881)
+
+#StartYear = '1881' #@param [1861, 1871, 1881, 1891, 1901]
+
+selectInput("EndYear", "End Year",
+            c("Choose one" = "", c(1871, 1881, 1891, 1901, 1911)),
+            selected = 1911)
+
+#EndYear = '1911' #@param [1871, 1881, 1891, 1901, 1911]
+
+
+occ_by_year %>% filter(Year == input$StartYear & new_occ == TRUE) %>%
+    select(people_start = people, Occode) %>%
+    inner_join(occ_by_year, by = 'Occode') %>%
+    filter(Year == input$EndYear) %>%
+    select(people_start, Occode, people_end = people) %>%
+     arrange(-people_end) %>% head(10) %>%
+    inner_join(occode_lookup, by = 'Occode') %>%
+    mutate(Occupation = paste0(Level3, " (", Occode, ")")) %>%
+    select(Occode, people_start, people_end, Occupation)
+```
+
+A violin plot is used to show the distribution of a numerical variable. It has similarities to a boxplot but while the boxplot displays summary statistics the violin plot can show how the density (think frequency or count) of values varies. In the following plot we can see the distribution of Age for a selected occupation, split by Sex when both genders are found in that occupation.
+
+Below the violin plot is a simple bar chart showing counts by year and sex.
+
+```{r}
+#@title Enter an occupation name (copy and paste from above) { run: "auto", vertical-output: true }
+Occupation = "DOMESTIC INDOOR SERVANTS IN HOTELS, LODGING HOUSES AND EATING HOUSES" #@param {type:"string"}
+
+occode_lookup %>% filter(Level3 == Occupation) %>%
+    inner_join(census_person, by = 'Occode') %>%
+    ggplot + geom_violin(aes(factor(Year), Age, fill = Sex)) + labs(x = "Year")
+
+occode_lookup %>% filter(Level3 == Occupation) %>%
+    inner_join(census_person, by = 'Occode') %>%
+    group_by(Year, Sex) %>% summarise(count = n()) %>%
+    ggplot + geom_bar(aes(x = factor(Year), y = count, fill = Sex), position = 'dodge', stat = 'identity') + labs(x = "Year")
+```
+
+# Notebook summary
+
+This notebook loaded data from multiple censuses into the normalised table structure. Three aspects of working with longitudinal census data were discussed:
+
+*   Changes in the census taking process and guidelines can have a skewing effect on statistics
+*   Parish boundary changes make geographical comparisons a challenge
+*   Changes in employment due to new industries and technologies can be surfaced through comparisons between censuses
+
