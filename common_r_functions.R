@@ -73,7 +73,6 @@ load_census <- function(census_file, census_variables, column_code) {
     not_numeric <- c("Cage", "Std_Par", "Cnti", "Alt_Cnti", "Ctry", "Alt_Ctry")
     
     numeric_columns <- union(as.vector(str_trim(code_columns$VariableName)), c("ParType", "H_Occ"))
-    print(numeric_columns)
     
     numeric_columns <- setdiff(numeric_columns, not_numeric)
 
