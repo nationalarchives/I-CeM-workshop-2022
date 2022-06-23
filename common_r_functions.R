@@ -52,7 +52,7 @@ load_census <- function(census_file, census_variables, column_code) {
     select("VariableName", "Label","Coded","AnonymisedVersion") %>%
     mutate(Coded = (Coded == "x"), AnonymisedVersion = (AnonymisedVersion == "x"))
 
-    columns_by_census <- variables %>%
+    columns_by_census <- census_variables %>%
     select("VariableName", EW51:SCOT01) %>%
     pivot_longer(EW51:SCOT01, names_to = "census_name", values_to = "has_variable") %>%
     mutate(has_variable = (has_variable == "x"))
