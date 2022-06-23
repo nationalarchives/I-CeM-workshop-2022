@@ -19,7 +19,7 @@ This notebook accompanies the workshop "Applying computational methods to census
 
 The notebook demonstrates opening a data extract from the I-CeM platform, exploring the structure, viewing records, and creating basic summaries.
 
-The notebook does not contain any data, so first we must upload a file. Follow the instructions provided in the Github repository (https://github.com/mark-bell-tna/I-CeM-workshop-2022/blob/main/README.md) to upload the data which was extracted from I-CeM earlier in the session. The notebook is intended to work with the full extract which is obtained by selecting "Download all variables (including raw textual variables)" at the Download Options stage.
+The notebook does not contain any data, so first we must upload a file. Follow the instructions provided in the Github repository (https://github.com/nationalarchives/I-CeM-workshop-2022/blob/main/README.md) to upload the data which was extracted from I-CeM earlier in the session. The notebook is intended to work with the full extract which is obtained by selecting "Download all variables (including raw textual variables)" at the Download Options stage.
 
 # Initial setup
 
@@ -36,70 +36,16 @@ library(tidyverse)
 library(repr)
 ```
 
-```{r, echo=FALSE}
-value_format <- function(in_value) {
-   str_replace_all(str_replace_all(str_replace_all(as.character(in_value), "[a-z]", "a"), "[0-9]", "9"), "[A-Z]", "A")
-}
-
-value_format_compress <- function(in_value) {
-    str_value <- as.character(in_value)
-    chr_values <- utf8ToInt(str_value)
-    chr_compressed <- array()
-    chr_format <- ifelse(chr_values >= 65 & chr_values <= 90, 65,
-        ifelse(chr_values >= 97 & chr_values <= 122, 97, 
-            ifelse(chr_values >= 48 & chr_values <= 57, 57, chr_values)))
-    rle_format <- rle(chr_format)
-    out_string <- ""
-    for (i in 1:length(rle_format$lengths)) {
-        out_string <- paste0(out_string, intToUtf8(rle_format$values[i]))
-        if (rle_format$lengths[i] > 1) {
-            out_string <- paste0(out_string, '*')
-        }
-    }
-    out_string
-}
+```{r}
+source('https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/common_r_functions.R')
+source('https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/table_creation_functions.R')
 ```
 
-```{r, echo=FALSE}
-getExtension <- function(file){ 
-    # Thanks to https://stackoverflow.com/questions/7779037/extract-file-extension-from-file-path
-    ex <- strsplit(basename(file), split="\\.")[[1]]
-    return(ex[-1])
-} 
-
-fix_header <- function(source_file, output_file) {
-
-    if (getExtension(source_file) == 'zip') {
-    SOURCE_ZIP_FILE = source_file
-    SOURCE_DATA_FILE = unzip(SOURCE_ZIP_FILE, list=TRUE)
-    SOURCE_DATA_FILE = SOURCE_DATA_FILE[1,]$Name
-    unzip(SOURCE_ZIP_FILE, SOURCE_DATA_FILE)
-    } else {
-        SOURCE_DATA_FILE = source_file
-    }
-
-    fr <- file(SOURCE_DATA_FILE,open="rt") #open file connection to read
-    fw <- file(output_file, open="wt") #open file connection to write 
-    header_row <- readLines(fr, n=1) #read in header
-    second_row <- readLines(fr, n=1) # read the next row
-    second_row
-    header_row <- unlist(strsplit(header_row, "|", fixed=TRUE))
-    header_length <- length(header_row)
-    second_length <- length(unlist(strsplit(second_row, "|", fixed=TRUE)))
-    if (header_length != second_length) {
-        header_row <- append(header_row, 'BLANK_1', after = 84)
-        header_row <- append(header_row, 'BLANK_2', after = 85)
-        header_row <- paste0(header_row, collapse = '|') #modify header    
-        print(paste0("Needed to fix: ",header_row))
-    }
-    writeLines(header_row,con=fw) #write header to file
-    writeLines(second_row,con=fw) #write header to file
-    while(length(body <- readLines(fr,n=10000)) > 0) {
-    writeLines(body,fw) #pass rest of file in chunks of 10000
-    }
-
-    close(fr);close(fw) #close connections
-}
+```{r}
+variable_file <- 'https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/Data/census%20variable%20descriptions.csv'
+variables <- read.csv(variable_file)
+occode_file <- 'https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/Data/occode_lookup.tsv'
+occode_lookup <- read.csv(occode_file, sep = '\t')
 ```
 
 # Loading the data file
@@ -119,8 +65,8 @@ If the previous step was followed correctly the cell will run without error and 
 It will also print out the number of rows and columns in the data frame.
 
 ```{r}
+#@title ...Enter source data file name { run: "auto", vertical-output: true, form-width: "50%", display-mode: "form" }
 
-SOURCE_DATA_FILE
 
 temp_file <- 'temporary_file.txt'
 fix_header(SOURCE_DATA_FILE, temp_file)
@@ -169,8 +115,6 @@ A full explanation of how the tables are created is included in the hidden Expla
 
 ```{r}
 #@title Click the arrow to load the data
-variable_file <- 'https://raw.githubusercontent.com/mark-bell-tna/I-CeM-workshop-2022/main/Data/census%20variable%20descriptions.csv'
-variables <- read.csv(variable_file)
 
 column_labels <- variables %>%
  select("VariableName", "Label","Coded","AnonymisedVersion") %>%
@@ -185,12 +129,14 @@ head(column_labels,3)
 head(columns_by_census,3)
 ```
 
-### Explanation (expand to read)
+<details>
+  <summary>Explanation (expand to read)</summary>
+  
 
 First we load the data file into a variable called variables. The data file is hosted on Github and is in csv (Comma Separated Values) format. The first row is a header row with column names.
 
 ```{r}
-variable_file <- 'https://raw.githubusercontent.com/mark-bell-tna/I-CeM-workshop-2022/main/Data/census%20variable%20descriptions.csv'
+variable_file <- 'https://raw.githubusercontent.com/nationalarchives/I-CeM-workshop-2022/main/Data/census%20variable%20descriptions.csv'
 variables <- read.csv(variable_file, header = TRUE)
 ```
 
@@ -212,6 +158,8 @@ columns_by_census <- variables %>%
   mutate(has_variable = (has_variable == "x"))
 ```
 
+</details>
+
 ## 1851 variables
 
 We can now use these two tables to trim down the original data table to only include columns which are populated in the 1851 England and Wales census and which appear in the anonymised extract. A new table  called census_data is created and will be used in the rest of the tutorial. The resulting list of columns in this table and their long label are printed at the end.
@@ -228,7 +176,7 @@ selected_columns <- columns_by_census %>%
 
 census_data <- source_data %>% select(str_trim(selected_columns$VariableName))
 
-selected_columns
+selected_columns %>% print(n=100)
 ```
 
 <details>
@@ -258,7 +206,6 @@ selected_columns %>% print(n=100)
 
 </details>
 
-
 # Exploring the data
 
 
@@ -268,13 +215,13 @@ The obvious starting point when first exploring the data is to look at some reco
 
 ```{r}
 options(width=1000)
-census_data %>% head(5)
+census_data %>% head(5) %>% print()
 ```
 
 Instead of the top 5 rows it can be more informative to view a random sample instead. In this case we switch the head function for the sample_n function.
 
 ```{r}
-census_data %>% sample_n(5)
+census_data %>% sample_n(5) %>% print()
 ```
 
 ## Data summary
@@ -297,9 +244,7 @@ The next statement defines the columns and prints out a list with labels.
 ```{r}
 output_columns <- c("RecID", "RegDist", "Parish", "Population", "Censusref", "H", "PID", "Sex", "Age", "Cond", "Relat", "Occ", "Bpstring", "BpCmty")
 output_columns <- all_of(output_columns)
-column_labels %>%
-  filter(VariableName %in% output_columns) %>%
-  select(VariableName, Label, Coded)
+column_labels %>% filter(VariableName %in% output_columns) %>% select(VariableName, Label, Coded)
 ```
 
 We will again use the sample_n function, with a parameter of 1, to select a random record. The select function is used to choose the columns defined above.
@@ -308,9 +253,7 @@ Every time you run the cell below a new row will be produced.
 Try running the cell a few times.
 
 ```{r}
-census_data %>%
-  sample_n(1) %>%
-  select(all_of(output_columns))
+census_data %>% sample_n(1) %>% select(all_of(output_columns))
 ```
 
 Instead of looking at a single record, let's look at the record for an entire household. The following query will use the Censusref and H (House Identifier) values from a new sample row and return every record with the same values.
@@ -375,14 +318,16 @@ Value <- function(v) { return(v) }
 ValueFormat <- function(v) { return(value_format(v)) }
 ShortFormat <- function(v) { return(value_format_compress(v)) }
 
+function_to_use <- get(aggregation_function)
 
 renderTable({
 census_data %>%
- select(aggregate_column = all_of(input$fieldname)) %>% 
- mutate(aggregate_column = lapply(aggregate_column, get(input$aggregation_function)))  %>%
+ select(aggregate_column = all_of(fieldname)) %>% 
+ mutate(aggregate_column = lapply(aggregate_column, function_to_use))  %>%
    group_by(aggregate_column) %>% summarise(count = n()) %>%
     arrange(-count) %>%
-    head(input$records)})
+    head(records)
+})
 ```
 
 # Visualisations
@@ -413,24 +358,22 @@ renderPlot({
 data_summary <- census_data %>%
     mutate(Age = as.numeric(Age), BlankCol = '') %>%
     filter(!is.na(Age)) %>%
-    mutate(IsChild = (Age < 18)) %>%
-    select(aggregate_column = all_of(input$FieldName), fill_column = all_of(input$PartitionField)) %>%
+    mutate(is_child = (Age < 18)) %>%
+    select(aggregate_column = all_of(FieldName), fill_column = all_of(PartitionField)) %>%
     group_by(aggregate_column, fill_column) %>% summarise(count = n())
 
 aggregate_col_summary <- data_summary %>%
     group_by(aggregate_column) %>%
     summarise(count_sum = sum(count)) %>%
-    arrange(-count_sum) %>%
-  head(input$top_n)
+    arrange(-count_sum) %>% head(records)
 
-out_plot <-data_summary %>% 
+out_plot <- data_summary %>% 
     inner_join(aggregate_col_summary, by = 'aggregate_column') %>%
         ggplot(aes(x = reorder(aggregate_column, -count), y = count, fill = fill_column)) +
-            geom_bar(stat="identity") + coord_flip() + facet_wrap(vars(fill_column)) + xlab(input$FieldName) +
+            geom_bar(stat="identity") + coord_flip() + facet_wrap(vars(fill_column)) + xlab(FieldName) +
             theme(axis.text.x = element_text(size = 15, angle = 55, vjust = 1.0, hjust=1.0))
 
 out_plot
-
 })
 
 ```
