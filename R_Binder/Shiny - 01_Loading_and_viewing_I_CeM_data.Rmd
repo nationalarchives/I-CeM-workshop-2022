@@ -8,7 +8,7 @@ output:
 
 Replace the text INSERT FILE NAME HERE with the name of your csv file
 ```{r}
-SOURCE_DATA_FILE <- "1851-rut-b72b4efe-e613-40f5-8ac6-6fe222f686c3.csv"
+SOURCE_DATA_FILE <- "INSERT FILE NAME HERE"
 ```
 
 
