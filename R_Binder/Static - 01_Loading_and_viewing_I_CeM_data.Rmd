@@ -317,7 +317,7 @@ function_to_use <- get(aggregation_function)
 
 census_data %>%
 select(aggregate_column = all_of(fieldname)) %>% 
-mutate(aggregate_column = lapply(aggregate_column, function_to_use))  %>%
+mutate(aggregate_column = do.call(rbind,lapply(aggregate_column, function_to_use)))  %>%
  group_by(aggregate_column) %>% summarise(count = n()) %>%
   arrange(-count) %>%
   head(records)
