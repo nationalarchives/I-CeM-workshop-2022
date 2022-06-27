@@ -11,9 +11,9 @@
 </head>
 <body>
 <div id="htmlwidget_container">
-  <div id="htmlwidget-efa424bb848b95d84ed8" style="width:900px;height:600px;" class="grViz html-widget"></div>
+  <div id="htmlwidget-e12b870026a58fd1804c" style="width:900px;height:600px;" class="grViz html-widget"></div>
 </div>
-<script type="application/json" data-for="htmlwidget-efa424bb848b95d84ed8">{"x":{"diagram":"\n  digraph graph2 {\n  \n  graph [layout = dot, rankdir = LR]\n  \n  # node definitions with substituted label text\n  node [shape = square, color = red]\n  perrl [label = \"person_role\"]\n  rg [label = \"role_group\"]\n  p [label = \"parish\", color = red]\n  node [shape = square, color = blue]\n  pret [label = \"parish_return\"]\n  ch [label = \"census_household\"]\n  hu [label = \"household_unit\"]\n  per [label = \"census_person\"]\n  perrel [label = \"person_relation\"]\n  occ [label = \"occode_lookup\"]\n  \n  edge [arrowhead = crow]\n  p -> pret -> ch -> hu -> per -> perrel\n  per -> perrel\n  occ -> ch\n  occ -> per\n  perrl -> per\n  rg -> per\n  }\n\n  ","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
-<script type="application/htmlwidget-sizing" data-for="htmlwidget-efa424bb848b95d84ed8">{"viewer":{"width":900,"height":600,"padding":15,"fill":false},"browser":{"width":900,"height":600,"padding":40,"fill":false}}</script>
+<script type="application/json" data-for="htmlwidget-e12b870026a58fd1804c">{"x":{"diagram":"\n  digraph graph2 {\n  \n  graph [layout = dot, rankdir = LR]\n  \n  # node definitions with substituted label text\n  node [shape = square, color = red]\n  perrl [label = \"person_role\"]\n  rg [label = \"role_group\"]\n  fr [label = \"familial_relation\"]\n  p [label = \"parish\"]\n  \n  node [shape = square, color = blue]\n  pret [label = \"parish_return\"]\n  ch [label = \"census_household\"]\n  hu [label = \"household_unit\"]\n  per [label = \"census_person\"]\n  perrel [label = \"person_relation\"]\n  occ [label = \"occode_lookup\"]\n  \n  edge [arrowhead = crow]\n  p -> pret -> ch -> hu -> per -> perrel\n  per -> perrel\n  occ -> ch\n  occ -> per\n  perrl -> per\n  rg -> per\n  fr -> per\n  }\n\n  ","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<script type="application/htmlwidget-sizing" data-for="htmlwidget-e12b870026a58fd1804c">{"viewer":{"width":900,"height":600,"padding":15,"fill":false},"browser":{"width":900,"height":600,"padding":40,"fill":false}}</script>
 </body>
 </html>
