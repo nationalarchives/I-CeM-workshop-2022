@@ -14,3 +14,9 @@ Notebook 3: Longitudinal analysis
 **RStudio hosted on Binder**
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/nationalarchives/I-CeM-workshop-2022/HEAD?urlpath=rstudio)
+
+</br>
+
+**Guide to Colabs, Binder, and R**
+
+[Click here to see guide](https://github.com/nationalarchives/I-CeM-workshop-2022/blob/main/Census%20training%20-%20R%20Instructions%20-%2028th%20June%202022.pdf)
