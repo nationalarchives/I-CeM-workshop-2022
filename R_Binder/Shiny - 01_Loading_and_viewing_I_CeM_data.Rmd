@@ -374,7 +374,7 @@ out_plot <- data_summary %>%
     inner_join(aggregate_col_summary, by = 'aggregate_column') %>%
         ggplot(aes(x = reorder(aggregate_column, -count), y = count, fill = fill_column)) +
             geom_bar(stat="identity") + coord_flip() + facet_wrap(vars(fill_column)) + xlab(input$FieldName) +
-            theme(axis.text.x = element_text(size = 15, angle = 55, vjust = 1.0, hjust=1.0))
+            theme(axis.text.x = element_text(size = 10, angle = 55, vjust = 1.0, hjust=1.0))
 
 out_plot
 })
