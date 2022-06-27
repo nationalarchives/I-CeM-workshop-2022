@@ -337,7 +337,7 @@ PartitionField = 'is_child' # Choose from ["BlankCol", "Sex", "is_child"]
 records = 15
 
 
-options(repr.plot.width=20, repr.plot.height=8, warn = -1)
+options(fig.width=20, fig.height=8, warn = -1)
 
 data_summary <- census_data %>%
     mutate(Age = as.numeric(Age), BlankCol = '') %>%
